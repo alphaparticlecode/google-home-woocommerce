@@ -1,8 +1,12 @@
+'use strict';
+
+const {dialogflow} = require('actions-on-google');
 const functions = require('firebase-functions');
 
-// // Create and Deploy Your First Cloud Functions
-// // https://firebase.google.com/docs/functions/write-firebase-functions
-//
-// exports.helloWorld = functions.https.onRequest((request, response) => {
-//  response.send("Hello from Firebase!");
-// });
+const app = dialogflow({debug: true});
+
+app.intent('sale', (conv, {color, number}) => {
+  conv.close(`There are no sales today. Check back again tomorrow!`);
+});
+
+exports.acmeWidgetCatalog = functions.https.onRequest(app);
