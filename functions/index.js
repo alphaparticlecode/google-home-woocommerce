@@ -17,8 +17,13 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     agent.add(`Sorry, there is nothing on sale today. Check back tomorrow!`);
   }
 
+  function todays_hours(agent) {
+    agent.add(`Sorry, there are no hours for today. Check back tomorrow!`);
+  }
+
   // Run the proper function handler based on the matched Dialogflow intent name
   let intentMap = new Map();
   intentMap.set('sale_items', sale_items);
+  intentMap.set('todays_hours', todays_hours);
   agent.handleRequest(intentMap);
 });
