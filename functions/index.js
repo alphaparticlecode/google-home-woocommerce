@@ -35,8 +35,6 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   			res.on('end', () => {
 				let response = JSON.parse(body);
 
-				console.log(response);
-
 				let voice_response = 'On sale today we have ';
 
 				if( response.length === 0 ) {
