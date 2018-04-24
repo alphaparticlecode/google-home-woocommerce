@@ -5,8 +5,10 @@
 const functions = require('firebase-functions');
 const {WebhookClient} = require('dialogflow-fulfillment');
 const {Card, Suggestion} = require('dialogflow-fulfillment');
-const rpn = require('request-promise-native');
- 
+
+const http = require('https');
+const striptags = require('striptags');
+
 process.env.DEBUG = 'dialogflow:debug'; // enables lib debugging statements
  
 exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, response) => {
@@ -15,27 +17,45 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   console.log('Dialogflow Request body: ' + JSON.stringify(request.body));
  
   function sale_items(agent) {
+  	return new Promise((resolve, reject) => {
+  		var options = {
+			host: 'acmewidget.alphaparticle.com',
+  			port: 443,
+   			path: '/wp-json/wc/v2/products?filter[tag]=sale&filter[limit]=3',
+   			headers: {
+      			// WooCommerce Consumer Key, Consumer Secret stored in Firebase environment variables
+      			'Authorization': 'Basic ' + new Buffer(functions.config().acmewidget.key + ':' + functions.config().acmewidget.secret).toString('base64')
+   			}    
+		};
 
-    // WooCommerce Consumer Key, Consumer Secret stored in Firebase environment variables
-    // Base64 encoded and separated by :
-    rpn.get('https://acmewidget.alphaparticle.com/wp-json/wc/v2/products?filter[tag]=sale&filter[limit]=3')
-    .auth(functions.config().acmewidget.key, functions.config().acmewidget.secret, false)
-    .then(jsonBody => {
-    	console.log(jsonBody);
-    	var body = JSON.parse(jsonBody);
+  		http.get(options, (res) => {
+  			let body = ''; // var to store the response chunks
+  			res.on('data', (d) => { body += d; }); // store each response chunk
 
-    	console.log(body);
-    	agent.add('API resolved!');
-    	return Promise.resolve( agent ); 
-    })
-    .catch(jsonBody => {
-    	console.log(jsonBody);
-    	var body = JSON.parse(jsonBody);
+  			res.on('end', () => {
+				let response = JSON.parse(body);
 
-    	console.log(body);
-    	agent.add('API did not resolve!');
-    	return Promise.reject( agent ); 
-    });
+				let voice_response = 'On sale today we have ';
+
+				for (var i = 0, len = response.length; i < len; i++) {
+					if( len === 1 ) {
+						voice_response += response[i].name;
+						voice_response += '. ';
+						voice_response += striptags(response[i].description);
+
+						agent.add(voice_response);
+					}
+				}
+				
+		        resolve(response);
+  			});
+
+  			res.on('error', (error) => {
+		    	agent.add('API did not resolve!');
+		    	reject(error);
+		    });
+  		});
+  	});
   }
 
   function todays_hours(agent) {
