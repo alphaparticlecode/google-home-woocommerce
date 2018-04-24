@@ -21,7 +21,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   		var options = {
 			host: 'acmewidget.alphaparticle.com',
   			port: 443,
-   			path: '/wp-json/wc/v2/products?filter[tag]=sale&filter[limit]=3',
+   			path: '/wp-json/wc/v2/products?tag=16&per_page=3',
    			headers: {
       			// WooCommerce Consumer Key, Consumer Secret stored in Firebase environment variables
       			'Authorization': 'Basic ' + new Buffer(functions.config().acmewidget.key + ':' + functions.config().acmewidget.secret).toString('base64')
@@ -35,7 +35,17 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   			res.on('end', () => {
 				let response = JSON.parse(body);
 
+				console.log(response);
+
 				let voice_response = 'On sale today we have ';
+
+				if( response.length === 0 ) {
+					voice_response = 'We have no items on sale today. Please check back soon!';
+					agent.add(voice_response);
+				}
+				else {
+					voice_response = 'On sale today we have ';
+				}
 
 				for (var i = 0, len = response.length; i < len; i++) {
 					if( len === 1 ) {
@@ -44,7 +54,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
 						voice_response += striptags(response[i].description);
 
 						agent.add(voice_response);
-					}
+					}					
 				}
 				
 		        resolve(response);
