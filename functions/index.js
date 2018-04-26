@@ -33,29 +33,32 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   			res.on('data', (d) => { body += d; }); // store each response chunk
 
   			res.on('end', () => {
-				let response = JSON.parse(body);
+  				let response = JSON.parse(body);
 
-				let voice_response = 'On sale today we have ';
+  				let voice_response = 'On sale today we have ';
 
-				if( response.length === 0 ) {
-					voice_response = 'We have no items on sale today. Please check back soon!';
-					agent.add(voice_response);
-				}
-				else {
-					voice_response = 'On sale today we have ';
-				}
+  				if( response.length === 0 ) {
+  					voice_response = 'We have no items on sale today. Please check back soon!';
+  					agent.add(voice_response);
+            resolve(response);
+  				}
+  				else {
+  					voice_response = 'On sale today we have ';
 
-				for (var i = 0, len = response.length; i < len; i++) {
-					if( len === 1 ) {
-						voice_response += response[i].name;
-						voice_response += '. ';
-						voice_response += striptags(response[i].description);
+            for (var i = 0, len = response.length; i < len; i++) {
+              if( i === 0 ) {
+                voice_response += response[i].name + '. ';
+                voice_response += striptags(response[i].description);
+              }
+              else {
+                voice_response += 'We also have ' + response[i].name + '. ';
+                voice_response += striptags(response[i].description);
+              }     
+            }
 
-						agent.add(voice_response);
-					}					
-				}
-				
-		        resolve(response);
+            agent.add(voice_response);
+            resolve(response);
+  				}
   			});
 
   			res.on('error', (error) => {
