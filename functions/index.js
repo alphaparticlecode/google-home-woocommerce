@@ -69,13 +69,60 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   	});
   }
 
-  function todays_hours(agent) {
-    agent.add(`Sorry, there are no hours for today. Check back tomorrow!`);
+  function store_hours(agent) {
+    let hours_date = request.body.queryResult.parameters.date;
+
+    return new Promise((resolve, reject) => {
+      var options = {
+        host: 'acmewidget.alphaparticle.com',
+        port: 443,
+        path: '/wp-json/acmewidget/hours',
+      };
+
+      http.get(options, (res) => {
+        let body = ''; // var to store the response chunks
+        res.on('data', (d) => { body += d; }); // store each response chunk
+
+        res.on('end', () => {
+          let response = JSON.parse(body);
+
+          let split_response = response.split('\\r\\n');
+          
+          var day_of_week;
+          
+          if( hours_date === '' ) {
+            day_of_week = new Date().getDay();
+          }
+          else {
+            day_of_week = new Date( Date.parse( hours_date ) ).getDay();
+          }
+
+          var hours_for_day = split_response[day_of_week];
+          var trimmed_hours = hours_for_day.split(':')[1].trim();
+
+          var dates = [
+            'Sunday',
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday'
+          ];
+
+          var voice_response = 'The hours for ' + dates[day_of_week] + ' are ' + trimmed_hours;
+
+          agent.add(voice_response);
+          resolve(response);
+        });
+
+      });
+    });
   }
 
   // Run the proper function handler based on the matched Dialogflow intent name
   let intentMap = new Map();
   intentMap.set('sale_items', sale_items);
-  intentMap.set('todays_hours', todays_hours);
+  intentMap.set('store_hours', store_hours);
   agent.handleRequest(intentMap);
 });
