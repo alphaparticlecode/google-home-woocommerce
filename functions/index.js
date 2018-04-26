@@ -19,14 +19,14 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   function sale_items(agent) {
   	return new Promise((resolve, reject) => {
   		var options = {
-			host: 'acmewidget.alphaparticle.com',
+			  host: 'acmewidget.alphaparticle.com',
   			port: 443,
    			path: '/wp-json/wc/v2/products?tag=16&per_page=3',
    			headers: {
       			// WooCommerce Consumer Key, Consumer Secret stored in Firebase environment variables
       			'Authorization': 'Basic ' + new Buffer(functions.config().acmewidget.key + ':' + functions.config().acmewidget.secret).toString('base64')
    			}    
-		};
+		  };
 
   		http.get(options, (res) => {
   			let body = ''; // var to store the response chunks
