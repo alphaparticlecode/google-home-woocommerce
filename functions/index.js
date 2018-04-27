@@ -99,6 +99,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
 
           var hours_for_day = split_response[day_of_week];
           var trimmed_hours = hours_for_day.split(':')[1].trim();
+          trimmed_hours = trimmed_hours.replace('-', ' until ')
 
           var dates = [
             'Sunday',
@@ -110,7 +111,11 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
             'Saturday'
           ];
 
-          var voice_response = 'The hours for ' + dates[day_of_week] + ' are ' + trimmed_hours;
+          var voice_response = '<speak>On ' + dates[day_of_week] + ', we are open from ' + trimmed_hours + '</speak>';
+
+          // Make sure Google pronounces two digit numbers correctly
+          var re = /([0-9][0-9])/g;
+          voice_response = voice_response.replace( re, "<say-as interpret-as=\"cardinal\">$1</say-as>")
 
           agent.add(voice_response);
           resolve(response);
